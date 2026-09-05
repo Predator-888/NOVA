@@ -75,6 +75,11 @@ fun PdfReaderScreen(
         val rendered = withContext(Dispatchers.Default) {
             val page = r.openPage(pageIndex)
             val bmp = Bitmap.createBitmap(page.width * 2, page.height * 2, Bitmap.Config.ARGB_8888)
+
+            // ---> ADD THIS LINE <---
+            // This forces the canvas to be white before drawing the black PDF text
+            bmp.eraseColor(android.graphics.Color.WHITE)
+
             page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
             page.close()
             bmp

@@ -3,15 +3,21 @@ package com.example.nova.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Divider
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -34,12 +40,29 @@ import com.example.nova.data.TimeSlot
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimetableScreen(viewModel: TimetableViewModel = viewModel()) {
+fun TimetableScreen(
+    viewModel: TimetableViewModel = viewModel(),
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit
+) {
     val slots by viewModel.slots.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Your timetable") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Your timetable") },
+                actions = {
+                    IconButton(onClick = onThemeToggle) {
+                        Icon(
+                            imageVector = if (isDarkTheme) Icons.Filled.LightMode else Icons.Filled.DarkMode,
+                            contentDescription = "Toggle Theme",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Add time block")
@@ -48,17 +71,26 @@ fun TimetableScreen(viewModel: TimetableViewModel = viewModel()) {
     ) { padding ->
         if (slots.isEmpty()) {
             Column(
-                modifier = Modifier.padding(padding).fillMaxSize(),
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("No time blocks yet. Tap + to add your first one.")
+                Text(
+                    text = "No time blocks yet. Tap + to add your first one.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         } else {
-            LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+            ) {
                 items(slots, key = { it.id }) { slot ->
                     SlotRow(slot = slot, onDelete = { viewModel.deleteSlot(slot) })
-                    Divider()
+                    // Notice: The Divider() is gone because the ElevatedCard handles spacing nicely!
                 }
             }
         }
@@ -77,30 +109,61 @@ fun TimetableScreen(viewModel: TimetableViewModel = viewModel()) {
 
 @Composable
 fun SlotRow(slot: TimeSlot, onDelete: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    ElevatedCard(
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        Column {
-            Text(slot.title, style = MaterialTheme.typography.titleMedium)
-            Text(
-                "${slot.category.label} · " +
-                    "%02d:%02d".format(slot.startHour, slot.startMinute) + " - " +
-                    "%02d:%02d".format(slot.endHour, slot.endMinute),
-                style = MaterialTheme.typography.bodySmall
-            )
-            if (!slot.isOneOff && slot.daysOfWeek.isNotEmpty()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    slot.daysOfWeek.sortedBy { it.value }.joinToString(", ") { it.name.take(3) },
-                    style = MaterialTheme.typography.bodySmall
+                    text = slot.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            } else if (slot.isOneOff) {
-                Text("Tomorrow only", style = MaterialTheme.typography.bodySmall)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "${slot.category.label} • %02d:%02d - %02d:%02d".format(
+                        slot.startHour, slot.startMinute, slot.endHour, slot.endMinute
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                if (!slot.isOneOff && slot.daysOfWeek.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = slot.daysOfWeek.sortedBy { it.value }.joinToString(", ") { it.name.take(3) },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                } else if (slot.isOneOff) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Tomorrow only",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
             }
-        }
-        IconButton(onClick = onDelete) {
-            Icon(Icons.Default.Delete, contentDescription = "Delete")
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }

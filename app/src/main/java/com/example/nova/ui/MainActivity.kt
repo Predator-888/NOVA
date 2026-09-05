@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -34,17 +35,41 @@ import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
+// Make sure your theme import matches your actual package structure
+import com.example.nova.ui.theme.NovaTheme
+
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestNotificationPermissionIfNeeded()
         requestExactAlarmPermissionIfNeeded()
+        checkAndRequestUsageStatsPermission()
+        checkAndRequestOverlayPermission()
 
         setContent {
-            MaterialTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    AppRoot()
+            val systemTheme = isSystemInDarkTheme()
+            var isDarkTheme by remember { mutableStateOf(systemTheme) }
+
+            // ---> ADD THIS LINE: State to track if the intro is finished <---
+            var showIntro by remember { mutableStateOf(true) }
+
+            NovaTheme(darkTheme = isDarkTheme, dynamicColor = false) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    // ---> UPDATE THIS BLOCK <---
+                    if (showIntro) {
+                        // Show the splash screen, and pass a function that flips the state when done
+                        IntroScreen(onTimeout = { showIntro = false })
+                    } else {
+                        // Once the intro finishes, load the main app!
+                        AppRoot(
+                            isDarkTheme = isDarkTheme,
+                            onThemeToggle = { isDarkTheme = !isDarkTheme }
+                        )
+                    }
                 }
             }
         }
@@ -71,10 +96,39 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    private fun checkAndRequestUsageStatsPermission() {
+        val appOps = getSystemService(APP_OPS_SERVICE) as android.app.AppOpsManager
+        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            appOps.unsafeCheckOpNoThrow(
+                android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(), packageName
+            )
+        } else {
+            appOps.checkOpNoThrow(
+                android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(), packageName
+            )
+        }
+
+        if (mode != android.app.AppOpsManager.MODE_ALLOWED) {
+            val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+            startActivity(intent)
+        }
+    }
+
+    private fun checkAndRequestOverlayPermission() {
+        if (!Settings.canDrawOverlays(this)) {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")
+            )
+            startActivity(intent)
+        }
+    }
 }
 
 @Composable
-fun AppRoot() {
+fun AppRoot(isDarkTheme: Boolean, onThemeToggle: () -> Unit) {
     var selectedTab by remember { mutableStateOf(0) }
 
     Scaffold(
@@ -109,7 +163,10 @@ fun AppRoot() {
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             when (selectedTab) {
-                0 -> TimetableScreen()
+                0 -> TimetableScreen(
+                    isDarkTheme = isDarkTheme,
+                    onThemeToggle = onThemeToggle
+                )
                 1 -> TimerScreen()
                 2 -> TomorrowScreen()
                 else -> ReadingScreen()
