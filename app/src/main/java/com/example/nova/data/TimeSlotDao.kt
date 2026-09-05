@@ -16,6 +16,9 @@ interface TimeSlotDao {
     @Query("SELECT * FROM time_slots WHERE isOneOff = 1 AND specificDate = :date AND isActive = 1")
     suspend fun getOneOffTasksForDate(date: String): List<TimeSlot>
 
+    @Query("SELECT * FROM time_slots WHERE isOneOff = 1 AND specificDate = :date AND isActive = 1 ORDER BY startHour, startMinute")
+    fun getOneOffTasksForDateFlow(date: String): Flow<List<TimeSlot>>
+
     @Query("SELECT * FROM time_slots WHERE id = :id")
     suspend fun getById(id: Long): TimeSlot?
 

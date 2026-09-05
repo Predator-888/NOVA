@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.EventNote
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -90,13 +92,27 @@ fun AppRoot() {
                     icon = { Icon(Icons.Default.Timer, contentDescription = "Timer") },
                     label = { Text("Timer") }
                 )
+                NavigationBarItem(
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 },
+                    icon = { Icon(Icons.Default.EventNote, contentDescription = "Tomorrow") },
+                    label = { Text("Tomorrow") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 3,
+                    onClick = { selectedTab = 3 },
+                    icon = { Icon(Icons.Default.MenuBook, contentDescription = "Reading") },
+                    label = { Text("Reading") }
+                )
             }
         }
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             when (selectedTab) {
                 0 -> TimetableScreen()
-                else -> TimerScreen()
+                1 -> TimerScreen()
+                2 -> TomorrowScreen()
+                else -> ReadingScreen()
             }
         }
     }

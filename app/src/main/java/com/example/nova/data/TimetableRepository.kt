@@ -7,6 +7,9 @@ class TimetableRepository(private val dao: TimeSlotDao) {
 
     fun getAllSlots(): Flow<List<TimeSlot>> = dao.getAllActiveSlots()
 
+    fun getTomorrowTasksFlow(date: LocalDate): Flow<List<TimeSlot>> =
+        dao.getOneOffTasksForDateFlow(date.toString())
+
     suspend fun addSlot(slot: TimeSlot): Long = dao.insert(slot)
 
     suspend fun updateSlot(slot: TimeSlot) = dao.update(slot)
