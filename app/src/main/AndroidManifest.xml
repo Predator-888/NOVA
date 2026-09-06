@@ -35,7 +35,13 @@
         </activity>
 
         <receiver
+            android:name=".scheduler.WindDownReceiver"
+            android:exported="false" />
+        <receiver
             android:name=".scheduler.AlarmReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".scheduler.MorningPlanReceiver"
             android:exported="false" />
 
         <receiver
@@ -53,6 +59,15 @@
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Visible countdown notification for a study/focus timer the user starts" />
+        </service>
+
+        <service
+            android:name=".blocker.AppBlockerService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Monitors foreground apps to block social media distractions during active study sessions" />
         </service>
 
     </application>

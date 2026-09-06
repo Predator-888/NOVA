@@ -37,6 +37,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nova.timer.PomodoroPhase
 import androidx.compose.ui.unit.sp
+import android.content.Intent
+import android.os.Build
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+import com.example.nova.blocker.AppBlockerService
 
 @Composable
 fun TimerScreen(viewModel: TimerViewModel = viewModel()) {
@@ -45,6 +50,22 @@ fun TimerScreen(viewModel: TimerViewModel = viewModel()) {
     val sessionsToday by viewModel.sessionsToday.collectAsState()
     val minutesToday by viewModel.minutesToday.collectAsState()
 
+    val context = LocalContext.current
+
+    LaunchedEffect(state.hasStarted) {
+        val serviceIntent = Intent(context, AppBlockerService::class.java)
+        if (state.hasStarted) {
+            // Wake up the blocker!
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
+        } else {
+            // Put the blocker to sleep
+            context.stopService(serviceIntent)
+        }
+    }
     // 2. Map the phase label using your existing logic
     val phaseLabel = when (state.phase) {
         PomodoroPhase.WORK -> "Study"

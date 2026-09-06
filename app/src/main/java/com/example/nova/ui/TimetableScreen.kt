@@ -3,6 +3,7 @@ package com.example.nova.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.filled.NextPlan
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,7 +44,8 @@ import com.example.nova.data.TimeSlot
 fun TimetableScreen(
     viewModel: TimetableViewModel = viewModel(),
     isDarkTheme: Boolean,
-    onThemeToggle: () -> Unit
+    onThemeToggle: () -> Unit,
+    onNavigateToPlan: () -> Unit // <--- ADD THIS
 ) {
     val slots by viewModel.slots.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
@@ -53,6 +55,13 @@ fun TimetableScreen(
             TopAppBar(
                 title = { Text("Your timetable") },
                 actions = {
+                    IconButton(onClick = onNavigateToPlan) { // <--- ADD THIS BUTTON
+                        Icon(
+                            imageVector = Icons.Default.NextPlan,
+                            contentDescription = "Plan Tomorrow",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                     IconButton(onClick = onThemeToggle) {
                         Icon(
                             imageVector = if (isDarkTheme) Icons.Filled.LightMode else Icons.Filled.DarkMode,
